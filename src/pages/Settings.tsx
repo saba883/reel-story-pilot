@@ -4,12 +4,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Download, Upload, Shield, Info, Instagram } from "lucide-react";
+import { Download, Upload, Shield, Info, Instagram, FileText, BookOpen, User, CreditCard } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { BottomNav } from "@/components/BottomNav";
+import { MessageTemplateModal } from "@/components/MessageTemplateModal";
+import { ProfileSettings } from "@/components/ProfileSettings";
+import { BillingPricing } from "@/components/BillingPricing";
 
 const Settings = () => {
   const [importing, setImporting] = useState(false);
+  const [showCommentTemplates, setShowCommentTemplates] = useState(false);
+  const [showDMTemplates, setShowDMTemplates] = useState(false);
+  const [showProfileSettings, setShowProfileSettings] = useState(false);
+  const [showBillingPricing, setShowBillingPricing] = useState(false);
 
   const handleExport = async () => {
     try {
@@ -119,6 +126,75 @@ const Settings = () => {
               This is a privacy-first demo. No real Instagram connection is made, 
               and all data is stored locally in your browser and backend memory.
             </p>
+          </CardContent>
+        </Card>
+
+        {/* Account Management */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Card className="border-0 shadow-card rounded-2xl cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setShowProfileSettings(true)}>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-full bg-blue-100">
+                  <User className="w-6 h-6 text-blue-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold">Profile Settings</h3>
+                  <p className="text-sm text-muted-foreground">Manage your account information and preferences</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 shadow-card rounded-2xl cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setShowBillingPricing(true)}>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-full bg-green-100">
+                  <CreditCard className="w-6 h-6 text-green-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold">Billing & Pricing</h3>
+                  <p className="text-sm text-muted-foreground">Manage your subscription and billing</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Message Templates */}
+        <Card className="border-0 shadow-card rounded-2xl">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="w-5 h-5" />
+              Message Templates
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Create and manage reusable message templates for comments and DMs.
+            </p>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setShowCommentTemplates(true)}
+                className="flex items-center gap-2"
+              >
+                <BookOpen className="w-4 h-4" />
+                Comment Templates
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setShowDMTemplates(true)}
+                className="flex items-center gap-2"
+              >
+                <BookOpen className="w-4 h-4" />
+                DM Templates
+              </Button>
+            </div>
+            
+            <div className="text-xs text-muted-foreground pt-2 border-t">
+              Templates help you maintain consistent messaging across all your automations.
+            </div>
           </CardContent>
         </Card>
 
@@ -248,6 +324,43 @@ const Settings = () => {
           </CardContent>
         </Card>
       </main>
+
+      {/* Template Modals */}
+      <MessageTemplateModal
+        isOpen={showCommentTemplates}
+        onClose={() => setShowCommentTemplates(false)}
+        onSelectTemplate={() => {}}
+        type="comment"
+      />
+      
+      <MessageTemplateModal
+        isOpen={showDMTemplates}
+        onClose={() => setShowDMTemplates(false)}
+        onSelectTemplate={() => {}}
+        type="dm"
+      />
+
+      {/* Profile Settings Modal */}
+      {showProfileSettings && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+          <div className="bg-background rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <ProfileSettings onClose={() => setShowProfileSettings(false)} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Billing & Pricing Modal */}
+      {showBillingPricing && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+          <div className="bg-background rounded-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <BillingPricing onClose={() => setShowBillingPricing(false)} />
+            </div>
+          </div>
+        </div>
+      )}
 
       <BottomNav />
     </div>

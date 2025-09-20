@@ -5,10 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Instagram, LogOut, Play, Clock, MessageCircle, Send, UserPlus, Settings } from "lucide-react";
+import { Instagram, LogOut, Play, Clock, MessageCircle, Send, UserPlus, Settings, Reply, Shuffle, User, CreditCard, Crown } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { AutomationPanel } from "@/components/AutomationPanel";
 import { BottomNav } from "@/components/BottomNav";
+import { ProfileSettings } from "@/components/ProfileSettings";
+import { BillingPricing } from "@/components/BillingPricing";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 interface Reel {
   id: string;
@@ -34,6 +37,7 @@ interface Automation {
     customButtons?: Array<{text: string, action: string}>;
     customLinks?: Array<{url: string, text: string}>;
     triggerWords?: string[];
+    commentReplies?: string[];
     delay?: number;
     conditions?: {
       minFollowers?: number;
@@ -49,6 +53,7 @@ interface Automation {
     customButtons?: Array<{text: string, action: string}>;
     customLinks?: Array<{url: string, text: string}>;
     triggerWords?: string[];
+    commentReplies?: string[];
     delay?: number;
     conditions?: {
       minFollowers?: number;
@@ -67,6 +72,9 @@ const Dashboard = () => {
   const [selectedItem, setSelectedItem] = useState<{type: 'reel' | 'story', item: Reel | Story} | null>(null);
   const [user, setUser] = useState<{name: string} | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showProfileSettings, setShowProfileSettings] = useState(false);
+  const [showBillingPricing, setShowBillingPricing] = useState(false);
+  const [currentPlan, setCurrentPlan] = useState('pro');
 
   useEffect(() => {
     const token = localStorage.getItem('insta-auto-token');
@@ -199,21 +207,104 @@ const Dashboard = () => {
             <Instagram className="w-5 h-5 text-white" />
           </div>
           <span className="font-bold text-xl">InstaAuto</span>
+          <Badge variant="outline" className="ml-2">
+            <Crown className="w-3 h-3 mr-1" />
+            {currentPlan === 'free' ? 'Free' : currentPlan === 'pro' ? 'Pro' : 'Business'}
+          </Badge>
         </div>
         <div className="flex items-center gap-3">
-          <Avatar className="w-8 h-8">
-            <AvatarFallback className="bg-gradient-instagram text-white text-sm">
-              {user?.name?.charAt(0) || 'D'}
-            </AvatarFallback>
-          </Avatar>
-          <Button variant="ghost" size="sm" onClick={handleLogout}>
-            <LogOut className="w-4 h-4" />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowBillingPricing(true)}
+            className="hidden sm:flex items-center gap-2"
+          >
+            <CreditCard className="w-4 h-4" />
+            Billing
           </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback className="bg-gradient-instagram text-white text-sm">
+                    {user?.name?.charAt(0) || 'D'}
+                  </AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="end" forceMount>
+              <div className="flex flex-col space-y-1 p-2">
+                <p className="text-sm font-medium leading-none">{user?.name || 'Demo User'}</p>
+                <p className="text-xs leading-none text-muted-foreground">
+                  {user?.email || 'demo@example.com'}
+                </p>
+              </div>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setShowProfileSettings(true)}>
+                <User className="mr-2 h-4 w-4" />
+                <span>Profile Settings</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setShowBillingPricing(true)}>
+                <CreditCard className="mr-2 h-4 w-4" />
+                <span>Billing & Pricing</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Log out</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
 
       {/* Main Content */}
       <main className="p-4">
+        {/* Quick Access Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <Card className="border-0 shadow-card rounded-2xl cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setShowProfileSettings(true)}>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-full bg-blue-100">
+                  <User className="w-5 h-5 text-blue-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-sm">Profile Settings</h3>
+                  <p className="text-xs text-muted-foreground">Manage your account</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 shadow-card rounded-2xl cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setShowBillingPricing(true)}>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-full bg-green-100">
+                  <CreditCard className="w-5 h-5 text-green-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-sm">Billing & Pricing</h3>
+                  <p className="text-xs text-muted-foreground">Manage subscription</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 shadow-card rounded-2xl cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/settings')}>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-full bg-purple-100">
+                  <Settings className="w-5 h-5 text-purple-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-sm">All Settings</h3>
+                  <p className="text-xs text-muted-foreground">Complete settings</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         <Tabs defaultValue="reels" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="reels">Reels</TabsTrigger>
@@ -251,6 +342,12 @@ const Dashboard = () => {
                               <Badge variant="outline" className="text-xs">
                                 <Settings className="w-3 h-3 mr-1" />
                                 {automations.reels[reel.id].customButtons.length} btn
+                              </Badge>
+                            )}
+                            {automations.reels[reel.id].commentReplies?.length > 0 && (
+                              <Badge variant="outline" className="text-xs">
+                                <Shuffle className="w-3 h-3 mr-1" />
+                                {automations.reels[reel.id].commentReplies.length} replies
                               </Badge>
                             )}
                           </div>
@@ -331,6 +428,28 @@ const Dashboard = () => {
           onDelete={() => handleDeleteAutomation(selectedItem.type, selectedItem.item.id)}
           onClose={() => setSelectedItem(null)}
         />
+      )}
+
+      {/* Profile Settings Modal */}
+      {showProfileSettings && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+          <div className="bg-background rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <ProfileSettings onClose={() => setShowProfileSettings(false)} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Billing & Pricing Modal */}
+      {showBillingPricing && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+          <div className="bg-background rounded-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <BillingPricing onClose={() => setShowBillingPricing(false)} />
+            </div>
+          </div>
+        </div>
       )}
 
       <BottomNav />

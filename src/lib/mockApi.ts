@@ -28,6 +28,7 @@ interface Automation {
     customButtons?: Array<{text: string, action: string}>;
     customLinks?: Array<{url: string, text: string}>;
     triggerWords?: string[];
+    commentReplies?: string[];
     delay?: number;
     conditions?: {
       minFollowers?: number;
@@ -46,6 +47,7 @@ interface Automation {
     customButtons?: Array<{text: string, action: string}>;
     customLinks?: Array<{url: string, text: string}>;
     triggerWords?: string[];
+    commentReplies?: string[];
     delay?: number;
     conditions?: {
       minFollowers?: number;

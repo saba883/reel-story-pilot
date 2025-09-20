@@ -23,9 +23,14 @@ import {
   X,
   Settings,
   Clock,
-  Target
+  Target,
+  Reply,
+  Shuffle,
+  FileText,
+  BookOpen
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { MessageTemplateModal } from "./MessageTemplateModal";
 
 interface AutomationPanelProps {
   type: 'reel' | 'story';
@@ -38,6 +43,7 @@ interface AutomationPanelProps {
     customButtons?: Array<{text: string, action: string}>;
     customLinks?: Array<{url: string, text: string}>;
     triggerWords?: string[];
+    commentReplies?: string[];
     delay?: number;
     conditions?: {
       minFollowers?: number;
@@ -64,6 +70,7 @@ export const AutomationPanel = ({
   const [customButtons, setCustomButtons] = useState<Array<{text: string, action: string}>>([]);
   const [customLinks, setCustomLinks] = useState<Array<{url: string, text: string}>>([]);
   const [triggerWords, setTriggerWords] = useState<string[]>([]);
+  const [commentReplies, setCommentReplies] = useState<string[]>([]);
   const [delay, setDelay] = useState(0);
   const [conditions, setConditions] = useState({
     minFollowers: 0,
@@ -72,6 +79,7 @@ export const AutomationPanel = ({
     verified: false
   });
   const [activeTab, setActiveTab] = useState('basic');
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
 
   useEffect(() => {
     if (existingAutomation) {
@@ -80,6 +88,7 @@ export const AutomationPanel = ({
       setCustomButtons(existingAutomation.customButtons || []);
       setCustomLinks(existingAutomation.customLinks || []);
       setTriggerWords(existingAutomation.triggerWords || []);
+      setCommentReplies(existingAutomation.commentReplies || []);
       setDelay(existingAutomation.delay || 0);
       setConditions(existingAutomation.conditions || {
         minFollowers: 0,
@@ -106,6 +115,7 @@ export const AutomationPanel = ({
       customButtons: customButtons.filter(btn => btn.text.trim() && btn.action.trim()),
       customLinks: customLinks.filter(link => link.url.trim() && link.text.trim()),
       triggerWords: triggerWords.filter(word => word.trim()),
+      commentReplies: commentReplies.filter(reply => reply.trim()),
       delay,
       conditions
     };
@@ -127,10 +137,16 @@ export const AutomationPanel = ({
     const buttonText = customButtons.length > 0 ? ` with ${customButtons.length} custom button(s)` : "";
     const linkText = customLinks.length > 0 ? ` with ${customLinks.length} custom link(s)` : "";
     const triggerText = triggerWords.length > 0 ? ` triggered by: ${triggerWords.join(', ')}` : "";
+    const replyText = commentReplies.length > 0 ? ` with ${commentReplies.length} reply option(s)` : "";
+    
+    // For reels, show which reply would be randomly selected
+    const selectedReply = type === 'reel' && commentReplies.length > 0 
+      ? commentReplies[Math.floor(Math.random() * commentReplies.length)]
+      : text;
     
     toast({
       title: "Test simulation complete!",
-      description: `Would send ${action}${followText}${buttonText}${linkText}${triggerText}: "${text}" to @${item.owner}`,
+      description: `Would send ${action}${followText}${buttonText}${linkText}${triggerText}${replyText}: "${selectedReply}" to @${item.owner}`,
     });
   };
 
@@ -176,6 +192,28 @@ export const AutomationPanel = ({
     setTriggerWords(updated);
   };
 
+  const addCommentReply = () => {
+    setCommentReplies([...commentReplies, '']);
+  };
+
+  const removeCommentReply = (index: number) => {
+    setCommentReplies(commentReplies.filter((_, i) => i !== index));
+  };
+
+  const updateCommentReply = (index: number, value: string) => {
+    const updated = [...commentReplies];
+    updated[index] = value;
+    setCommentReplies(updated);
+  };
+
+  const handleSelectTemplate = (template: any) => {
+    setText(template.content);
+    toast({
+      title: "Template applied",
+      description: `"${template.name}" template loaded`,
+    });
+  };
+
   const maxLength = 500;
   const remainingChars = maxLength - text.length;
 
@@ -209,6 +247,47 @@ export const AutomationPanel = ({
             </CardContent>
           </Card>
 
+          {/* Feature Overview */}
+          <Card className="border-blue-200 bg-blue-50">
+            <CardContent className="p-4">
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-full bg-blue-100">
+                  <Settings className="w-4 h-4 text-blue-600" />
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-medium text-blue-900 mb-1">Automation Features Available</h4>
+                  <div className="flex flex-wrap gap-2 text-xs">
+                    <Badge variant="outline" className="text-blue-700 border-blue-300">
+                      <UserPlus className="w-3 h-3 mr-1" />
+                      Follow Before
+                    </Badge>
+                    <Badge variant="outline" className="text-blue-700 border-blue-300">
+                      <BookOpen className="w-3 h-3 mr-1" />
+                      Templates
+                    </Badge>
+                    {type === 'reel' && (
+                      <Badge variant="outline" className="text-blue-700 border-blue-300">
+                        <Shuffle className="w-3 h-3 mr-1" />
+                        Random Replies
+                      </Badge>
+                    )}
+                    <Badge variant="outline" className="text-blue-700 border-blue-300">
+                      <Settings className="w-3 h-3 mr-1" />
+                      Custom Buttons
+                    </Badge>
+                    <Badge variant="outline" className="text-blue-700 border-blue-300">
+                      <Target className="w-3 h-3 mr-1" />
+                      Advanced Rules
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-blue-600 mt-2">
+                    Switch between Basic and Advanced tabs to configure all features
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Tab Navigation */}
           <div className="flex space-x-1 bg-muted p-1 rounded-lg">
             <Button
@@ -218,7 +297,7 @@ export const AutomationPanel = ({
               className="flex-1"
             >
               <Settings className="w-4 h-4 mr-2" />
-              Basic
+              Basic Options
             </Button>
             <Button
               variant={activeTab === 'advanced' ? 'default' : 'ghost'}
@@ -227,7 +306,29 @@ export const AutomationPanel = ({
               className="flex-1"
             >
               <Target className="w-4 h-4 mr-2" />
-              Advanced
+              Advanced Features
+            </Button>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setFollowBefore(!followBefore)}
+              className={`flex items-center gap-2 ${followBefore ? 'bg-green-50 border-green-300 text-green-700' : ''}`}
+            >
+              <UserPlus className="w-4 h-4" />
+              {followBefore ? 'Following Enabled' : 'Enable Follow'}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowTemplateModal(true)}
+              className="flex items-center gap-2"
+            >
+              <BookOpen className="w-4 h-4" />
+              Use Template
             </Button>
           </div>
 
@@ -260,9 +361,20 @@ export const AutomationPanel = ({
 
               {/* Text Input */}
               <div className="space-y-2">
-                <Label htmlFor="automation-text">
-                  {type === 'reel' ? 'Comment Text' : 'DM Message'}
-                </Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="automation-text">
+                    {type === 'reel' ? 'Comment Text' : 'DM Message'}
+                  </Label>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowTemplateModal(true)}
+                    className="text-xs"
+                  >
+                    <BookOpen className="w-3 h-3 mr-1" />
+                    Templates
+                  </Button>
+                </div>
                 <Textarea
                   id="automation-text"
                   placeholder={type === 'reel' 
@@ -283,6 +395,53 @@ export const AutomationPanel = ({
                   </Badge>
                 </div>
               </div>
+
+              {/* Comment Replies - Only for Reels */}
+              {type === 'reel' && (
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Reply className="w-4 h-4" />
+                        Comment Replies
+                        <Badge variant="outline" className="text-xs">
+                          <Shuffle className="w-3 h-3 mr-1" />
+                          Random
+                        </Badge>
+                      </div>
+                      <Button size="sm" variant="outline" onClick={addCommentReply}>
+                        <Plus className="w-4 h-4" />
+                      </Button>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0 space-y-3">
+                    <p className="text-xs text-muted-foreground">
+                      Add multiple reply options. One will be randomly selected for each comment.
+                    </p>
+                    {commentReplies.map((reply, index) => (
+                      <div key={index} className="flex gap-2 items-center">
+                        <Input
+                          placeholder="Reply option"
+                          value={reply}
+                          onChange={(e) => updateCommentReply(index, e.target.value)}
+                        />
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => removeCommentReply(index)}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))}
+                    {commentReplies.length === 0 && (
+                      <p className="text-sm text-muted-foreground text-center py-4">
+                        No reply options configured. Add replies for random selection.
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Delay Setting */}
               <div className="space-y-2">
@@ -562,6 +721,14 @@ export const AutomationPanel = ({
           </div>
         </div>
       </SheetContent>
+      
+      {/* Message Template Modal */}
+      <MessageTemplateModal
+        isOpen={showTemplateModal}
+        onClose={() => setShowTemplateModal(false)}
+        onSelectTemplate={handleSelectTemplate}
+        type={type}
+      />
     </Sheet>
   );
 };
