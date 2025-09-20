@@ -58,16 +58,12 @@ const Dashboard = () => {
 
   const fetchData = async () => {
     try {
-      const [reelsRes, storiesRes, automationRes] = await Promise.all([
-        fetch('/api/reels'),
-        fetch('/api/stories'),
-        fetch('/api/automation')
-      ]);
-
+      // Use mock API for frontend-only demo
+      const { mockApi } = await import('@/lib/mockApi');
       const [reelsData, storiesData, automationData] = await Promise.all([
-        reelsRes.json(),
-        storiesRes.json(),
-        automationRes.json()
+        mockApi.getReels(),
+        mockApi.getStories(),
+        mockApi.getAutomations()
       ]);
 
       setReels(reelsData);
@@ -92,28 +88,28 @@ const Dashboard = () => {
 
   const handleSaveAutomation = async (type: 'reel' | 'story', id: string, data: any) => {
     try {
-      const response = await fetch(`/api/automation/${type}/${id}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-
-      if (response.ok) {
-        // Optimistic update
-        setAutomations(prev => ({
-          ...prev,
-          [type === 'reel' ? 'reels' : 'stories']: {
-            ...prev[type === 'reel' ? 'reels' : 'stories'],
-            [id]: data
-          }
-        }));
-        
-        toast({
-          title: `Auto-${type === 'reel' ? 'comment' : 'DM'} saved!`,
-          description: "Automation is now active",
-        });
-        setSelectedItem(null);
+      const { mockApi } = await import('@/lib/mockApi');
+      
+      if (type === 'reel') {
+        await mockApi.saveReelAutomation(id, data);
+      } else {
+        await mockApi.saveStoryAutomation(id, data);
       }
+
+      // Optimistic update
+      setAutomations(prev => ({
+        ...prev,
+        [type === 'reel' ? 'reels' : 'stories']: {
+          ...prev[type === 'reel' ? 'reels' : 'stories'],
+          [id]: data
+        }
+      }));
+      
+      toast({
+        title: `Auto-${type === 'reel' ? 'comment' : 'DM'} saved!`,
+        description: "Automation is now active",
+      });
+      setSelectedItem(null);
     } catch (error) {
       toast({
         title: "Failed to save",
@@ -125,23 +121,25 @@ const Dashboard = () => {
 
   const handleDeleteAutomation = async (type: 'reel' | 'story', id: string) => {
     try {
-      const response = await fetch(`/api/automation/${type}/${id}`, {
-        method: 'DELETE'
-      });
-
-      if (response.ok) {
-        setAutomations(prev => {
-          const newAutomations = { ...prev };
-          const key = type === 'reel' ? 'reels' : 'stories';
-          delete newAutomations[key][id];
-          return newAutomations;
-        });
-        
-        toast({
-          title: "Automation removed",
-          description: `Auto-${type === 'reel' ? 'comment' : 'DM'} deleted`,
-        });
+      const { mockApi } = await import('@/lib/mockApi');
+      
+      if (type === 'reel') {
+        await mockApi.deleteReelAutomation(id);
+      } else {
+        await mockApi.deleteStoryAutomation(id);
       }
+
+      setAutomations(prev => {
+        const newAutomations = { ...prev };
+        const key = type === 'reel' ? 'reels' : 'stories';
+        delete newAutomations[key][id];
+        return newAutomations;
+      });
+      
+      toast({
+        title: "Automation removed",
+        description: `Auto-${type === 'reel' ? 'comment' : 'DM'} deleted`,
+      });
     } catch (error) {
       toast({
         title: "Failed to delete",

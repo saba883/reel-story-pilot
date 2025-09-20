@@ -12,14 +12,9 @@ const Index = () => {
   const handleConnect = async () => {
     setConnecting(true);
     try {
-      // TODO: Replace with real Instagram OAuth
-      const response = await fetch('/api/auth/mock-connect', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({})
-      });
-      
-      const data = await response.json();
+      // Import mock API dynamically to avoid build issues if backend is preferred
+      const { mockApi } = await import('@/lib/mockApi');
+      const data = await mockApi.mockConnect();
       
       if (data.token) {
         localStorage.setItem('insta-auto-token', data.token);

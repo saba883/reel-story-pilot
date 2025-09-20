@@ -13,8 +13,8 @@ const Settings = () => {
 
   const handleExport = async () => {
     try {
-      const response = await fetch('/api/automation');
-      const data = await response.json();
+      const { mockApi } = await import('@/lib/mockApi');
+      const data = await mockApi.getAutomations();
       
       const exportData = {
         timestamp: new Date().toISOString(),
