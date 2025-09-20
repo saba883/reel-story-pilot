@@ -58,6 +58,17 @@ export default {
           ring: "hsl(var(--sidebar-ring))",
         },
       },
+      backgroundImage: {
+        'gradient-instagram': 'var(--gradient-instagram)',
+        'gradient-subtle': 'var(--gradient-subtle)',
+      },
+      boxShadow: {
+        'card': 'var(--shadow-card)',
+        'modal': 'var(--shadow-modal)',
+      },
+      spacing: {
+        'touch': 'var(--touch-target)',
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
