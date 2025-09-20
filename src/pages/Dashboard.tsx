@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Instagram, LogOut, Play, Clock, MessageCircle, Send } from "lucide-react";
+import { Instagram, LogOut, Play, Clock, MessageCircle, Send, UserPlus, Settings } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { AutomationModal } from "@/components/AutomationModal";
+import { AutomationPanel } from "@/components/AutomationPanel";
 import { BottomNav } from "@/components/BottomNav";
 
 interface Reel {
@@ -27,8 +27,36 @@ interface Story {
 }
 
 interface Automation {
-  reels: Record<string, { comment: string; schedule?: string }>;
-  stories: Record<string, { dm: string; schedule?: string }>;
+  reels: Record<string, { 
+    comment: string; 
+    schedule?: string;
+    followBefore?: boolean;
+    customButtons?: Array<{text: string, action: string}>;
+    customLinks?: Array<{url: string, text: string}>;
+    triggerWords?: string[];
+    delay?: number;
+    conditions?: {
+      minFollowers?: number;
+      maxFollowers?: number;
+      hasBio?: boolean;
+      verified?: boolean;
+    };
+  }>;
+  stories: Record<string, { 
+    dm: string; 
+    schedule?: string;
+    followBefore?: boolean;
+    customButtons?: Array<{text: string, action: string}>;
+    customLinks?: Array<{url: string, text: string}>;
+    triggerWords?: string[];
+    delay?: number;
+    conditions?: {
+      minFollowers?: number;
+      maxFollowers?: number;
+      hasBio?: boolean;
+      verified?: boolean;
+    };
+  }>;
 }
 
 const Dashboard = () => {
@@ -208,10 +236,24 @@ const Dashboard = () => {
                       <div className="flex items-center justify-between mb-1">
                         <h3 className="font-semibold truncate">{reel.caption}</h3>
                         {automations.reels[reel.id] && (
-                          <Badge variant="secondary" className="ml-2">
-                            <MessageCircle className="w-3 h-3 mr-1" />
-                            Auto-comment
-                          </Badge>
+                          <div className="flex gap-1 ml-2">
+                            <Badge variant="secondary">
+                              <MessageCircle className="w-3 h-3 mr-1" />
+                              Auto-comment
+                            </Badge>
+                            {automations.reels[reel.id].followBefore && (
+                              <Badge variant="outline" className="text-xs">
+                                <UserPlus className="w-3 h-3 mr-1" />
+                                Follow
+                              </Badge>
+                            )}
+                            {automations.reels[reel.id].customButtons?.length > 0 && (
+                              <Badge variant="outline" className="text-xs">
+                                <Settings className="w-3 h-3 mr-1" />
+                                {automations.reels[reel.id].customButtons.length} btn
+                              </Badge>
+                            )}
+                          </div>
                         )}
                       </div>
                       <p className="text-sm text-muted-foreground">@{reel.owner}</p>
@@ -242,10 +284,24 @@ const Dashboard = () => {
                       <div className="flex items-center justify-between mb-1">
                         <h3 className="font-semibold truncate">{story.caption}</h3>
                         {automations.stories[story.id] && (
-                          <Badge variant="secondary" className="ml-2">
-                            <Send className="w-3 h-3 mr-1" />
-                            Auto-DM
-                          </Badge>
+                          <div className="flex gap-1 ml-2">
+                            <Badge variant="secondary">
+                              <Send className="w-3 h-3 mr-1" />
+                              Auto-DM
+                            </Badge>
+                            {automations.stories[story.id].followBefore && (
+                              <Badge variant="outline" className="text-xs">
+                                <UserPlus className="w-3 h-3 mr-1" />
+                                Follow
+                              </Badge>
+                            )}
+                            {automations.stories[story.id].customButtons?.length > 0 && (
+                              <Badge variant="outline" className="text-xs">
+                                <Settings className="w-3 h-3 mr-1" />
+                                {automations.stories[story.id].customButtons.length} btn
+                              </Badge>
+                            )}
+                          </div>
                         )}
                       </div>
                       <p className="text-sm text-muted-foreground">@{story.owner}</p>
@@ -261,9 +317,9 @@ const Dashboard = () => {
         </Tabs>
       </main>
 
-      {/* Modal */}
+      {/* Automation Panel */}
       {selectedItem && (
-        <AutomationModal
+        <AutomationPanel
           type={selectedItem.type}
           item={selectedItem.item}
           existingAutomation={

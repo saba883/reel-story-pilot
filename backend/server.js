@@ -93,7 +93,16 @@ app.get('/api/automation', (req, res) => {
 // Save reel automation
 app.post('/api/automation/reel/:id', (req, res) => {
   const { id } = req.params;
-  const { comment, schedule } = req.body;
+  const { 
+    comment, 
+    schedule, 
+    followBefore,
+    customButtons,
+    customLinks,
+    triggerWords,
+    delay,
+    conditions
+  } = req.body;
   
   if (!comment) {
     return res.status(400).json({ error: 'Comment is required' });
@@ -103,6 +112,17 @@ app.post('/api/automation/reel/:id', (req, res) => {
     id,
     comment,
     schedule: schedule || null,
+    followBefore: followBefore || false,
+    customButtons: customButtons || [],
+    customLinks: customLinks || [],
+    triggerWords: triggerWords || [],
+    delay: delay || 0,
+    conditions: conditions || {
+      minFollowers: 0,
+      maxFollowers: 0,
+      hasBio: false,
+      verified: false
+    },
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   };
@@ -117,7 +137,16 @@ app.post('/api/automation/reel/:id', (req, res) => {
 // Save story automation
 app.post('/api/automation/story/:id', (req, res) => {
   const { id } = req.params;
-  const { dm, schedule } = req.body;
+  const { 
+    dm, 
+    schedule, 
+    followBefore,
+    customButtons,
+    customLinks,
+    triggerWords,
+    delay,
+    conditions
+  } = req.body;
   
   if (!dm) {
     return res.status(400).json({ error: 'DM message is required' });
@@ -127,6 +156,17 @@ app.post('/api/automation/story/:id', (req, res) => {
     id,
     dm,
     schedule: schedule || null,
+    followBefore: followBefore || false,
+    customButtons: customButtons || [],
+    customLinks: customLinks || [],
+    triggerWords: triggerWords || [],
+    delay: delay || 0,
+    conditions: conditions || {
+      minFollowers: 0,
+      maxFollowers: 0,
+      hasBio: false,
+      verified: false
+    },
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   };

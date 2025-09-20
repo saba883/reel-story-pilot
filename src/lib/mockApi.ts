@@ -18,8 +18,42 @@ interface Story {
 }
 
 interface Automation {
-  reels: Record<string, { comment: string; schedule?: string; id?: string; createdAt?: string; updatedAt?: string }>;
-  stories: Record<string, { dm: string; schedule?: string; id?: string; createdAt?: string; updatedAt?: string }>;
+  reels: Record<string, { 
+    comment: string; 
+    schedule?: string; 
+    id?: string; 
+    createdAt?: string; 
+    updatedAt?: string;
+    followBefore?: boolean;
+    customButtons?: Array<{text: string, action: string}>;
+    customLinks?: Array<{url: string, text: string}>;
+    triggerWords?: string[];
+    delay?: number;
+    conditions?: {
+      minFollowers?: number;
+      maxFollowers?: number;
+      hasBio?: boolean;
+      verified?: boolean;
+    };
+  }>;
+  stories: Record<string, { 
+    dm: string; 
+    schedule?: string; 
+    id?: string; 
+    createdAt?: string; 
+    updatedAt?: string;
+    followBefore?: boolean;
+    customButtons?: Array<{text: string, action: string}>;
+    customLinks?: Array<{url: string, text: string}>;
+    triggerWords?: string[];
+    delay?: number;
+    conditions?: {
+      minFollowers?: number;
+      maxFollowers?: number;
+      hasBio?: boolean;
+      verified?: boolean;
+    };
+  }>;
 }
 
 // Mock data
@@ -112,7 +146,7 @@ export const mockApi = {
     return getAutomations();
   },
 
-  async saveReelAutomation(id: string, data: { comment: string; schedule?: string }) {
+  async saveReelAutomation(id: string, data: any) {
     await delay(400);
     const automations = getAutomations();
     automations.reels[id] = {
@@ -130,7 +164,7 @@ export const mockApi = {
     };
   },
 
-  async saveStoryAutomation(id: string, data: { dm: string; schedule?: string }) {
+  async saveStoryAutomation(id: string, data: any) {
     await delay(400);
     const automations = getAutomations();
     automations.stories[id] = {
