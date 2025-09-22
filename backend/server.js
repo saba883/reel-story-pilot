@@ -1,13 +1,63 @@
 const express = require('express');
 const cors = require('cors');
+const fs = require('fs');
+const path = require('path');
 const app = express();
 const PORT = 4000;
 
-// In-memory store for demo
-let store = {
-  reels: {},
-  stories: {}
-};
+// Data directory and helpers for simple file-based persistence
+const dataDir = path.join(__dirname, 'data');
+const automationsFile = path.join(dataDir, 'automations.json');
+const templatesFile = path.join(dataDir, 'templates.json');
+const userFile = path.join(dataDir, 'user.json');
+
+function ensureDataFiles() {
+  if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+
+  if (!fs.existsSync(automationsFile)) {
+    fs.writeFileSync(automationsFile, JSON.stringify({ reels: {}, stories: {} }, null, 2));
+  }
+  if (!fs.existsSync(templatesFile)) {
+    fs.writeFileSync(templatesFile, JSON.stringify([], null, 2));
+  }
+  if (!fs.existsSync(userFile)) {
+    const defaultUser = {
+      id: 'demo-user-123',
+      name: 'Demo User',
+      email: 'demo@example.com',
+      phone: '+1 (555) 123-4567',
+      bio: 'Instagram automation enthusiast and content creator',
+      location: 'San Francisco, CA',
+      website: 'https://example.com',
+      avatar: '',
+      timezone: 'America/Los_Angeles',
+      language: 'en',
+      notifications: { email: true, push: true, automation: true, billing: true },
+      privacy: { profileVisible: true, dataSharing: false, analytics: true },
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    fs.writeFileSync(userFile, JSON.stringify(defaultUser, null, 2));
+  }
+}
+
+function readJSON(filePath, fallback) {
+  try {
+    const content = fs.readFileSync(filePath, 'utf8');
+    return JSON.parse(content);
+  } catch (e) {
+    return fallback;
+  }
+}
+
+function writeJSON(filePath, data) {
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+}
+
+ensureDataFiles();
+
+// Persistent store (loaded from file)
+let store = readJSON(automationsFile, { reels: {}, stories: {} });
 
 // Mock data
 const mockReels = [
@@ -33,6 +83,7 @@ const mockReels = [
     duration: 22
   }
 ];
+
 
 const mockStories = [
   {
@@ -87,57 +138,25 @@ app.get('/api/stories', (req, res) => {
 
 // Get all automations
 app.get('/api/automation', (req, res) => {
+  // reload latest from disk to reflect any external edits
+  store = readJSON(automationsFile, { reels: {}, stories: {} });
   res.json(store);
 });
 
 // Message Templates API
 app.get('/api/templates/:type', (req, res) => {
   const { type } = req.params;
-  // TODO: Replace with database query
-  const mockTemplates = [
-    {
-      id: '1',
-      name: 'Great Content',
-      content: 'Great content! 👏',
-      type: 'comment',
-      category: 'engagement',
-      tags: ['positive', 'generic'],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    },
-    {
-      id: '2',
-      name: 'Love This',
-      content: 'Love this! 🔥',
-      type: 'comment',
-      category: 'engagement',
-      tags: ['positive', 'short'],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    },
-    {
-      id: '4',
-      name: 'Thanks for Story',
-      content: 'Thanks for the story! 💯',
-      type: 'dm',
-      category: 'thanks',
-      tags: ['grateful', 'story'],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }
-  ];
-  
-  const filteredTemplates = mockTemplates.filter(t => t.type === type);
-  res.json(filteredTemplates);
+  const all = readJSON(templatesFile, []);
+  const filtered = all.filter(t => t.type === type);
+  res.json(filtered);
 });
 
 app.post('/api/templates', (req, res) => {
   const { name, content, type, category, tags } = req.body;
-  
   if (!name || !content || !type) {
     return res.status(400).json({ error: 'Name, content, and type are required' });
   }
-  
+  const all = readJSON(templatesFile, []);
   const newTemplate = {
     id: Date.now().toString(),
     name,
@@ -148,59 +167,42 @@ app.post('/api/templates', (req, res) => {
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   };
-  
-  // TODO: Save to database
-  res.json({
-    success: true,
-    template: newTemplate
-  });
+  all.push(newTemplate);
+  writeJSON(templatesFile, all);
+  res.json({ success: true, template: newTemplate });
+});
+
+app.put('/api/templates/:id', (req, res) => {
+  const { id } = req.params;
+  const updates = req.body || {};
+  const all = readJSON(templatesFile, []);
+  const idx = all.findIndex(t => t.id === id);
+  if (idx === -1) return res.status(404).json({ error: 'Template not found' });
+  all[idx] = { ...all[idx], ...updates, updatedAt: new Date().toISOString() };
+  writeJSON(templatesFile, all);
+  res.json({ success: true, template: all[idx] });
+});
+
+app.delete('/api/templates/:id', (req, res) => {
+  const { id } = req.params;
+  const all = readJSON(templatesFile, []);
+  const next = all.filter(t => t.id !== id);
+  writeJSON(templatesFile, next);
+  res.json({ success: true });
 });
 
 // User Profile API
 app.get('/api/user/profile', (req, res) => {
-  // TODO: Get from database
-  const mockProfile = {
-    id: 'demo-user-123',
-    name: 'Demo User',
-    email: 'demo@example.com',
-    phone: '+1 (555) 123-4567',
-    bio: 'Instagram automation enthusiast and content creator',
-    location: 'San Francisco, CA',
-    website: 'https://example.com',
-    avatar: '',
-    timezone: 'America/Los_Angeles',
-    language: 'en',
-    notifications: {
-      email: true,
-      push: true,
-      automation: true,
-      billing: true
-    },
-    privacy: {
-      profileVisible: true,
-      dataSharing: false,
-      analytics: true
-    },
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  };
-  
-  res.json(mockProfile);
+  const user = readJSON(userFile, null);
+  res.json(user);
 });
 
 app.put('/api/user/profile', (req, res) => {
-  const profileData = req.body;
-  
-  // TODO: Update in database
-  const updatedProfile = {
-    ...profileData,
-    updatedAt: new Date().toISOString()
-  };
-  
-  res.json({
-    success: true,
-    profile: updatedProfile
-  });
+  const profileData = req.body || {};
+  const current = readJSON(userFile, {});
+  const updatedProfile = { ...current, ...profileData, updatedAt: new Date().toISOString() };
+  writeJSON(userFile, updatedProfile);
+  res.json({ success: true, profile: updatedProfile });
 });
 
 // Billing API
@@ -382,6 +384,7 @@ app.post('/api/automation/reel/:id', (req, res) => {
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   };
+  writeJSON(automationsFile, store);
   
   res.json({
     success: true,
@@ -428,6 +431,7 @@ app.post('/api/automation/story/:id', (req, res) => {
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   };
+  writeJSON(automationsFile, store);
   
   res.json({
     success: true,
@@ -442,6 +446,7 @@ app.delete('/api/automation/reel/:id', (req, res) => {
   
   if (store.reels[id]) {
     delete store.reels[id];
+    writeJSON(automationsFile, store);
     res.json({ success: true, message: 'Reel automation deleted' });
   } else {
     res.status(404).json({ error: 'Automation not found' });
@@ -454,6 +459,7 @@ app.delete('/api/automation/story/:id', (req, res) => {
   
   if (store.stories[id]) {
     delete store.stories[id];
+    writeJSON(automationsFile, store);
     res.json({ success: true, message: 'Story automation deleted' });
   } else {
     res.status(404).json({ error: 'Automation not found' });

@@ -223,7 +223,7 @@ export const AutomationPanel = ({
 
   return (
     <Sheet open={true} onOpenChange={onClose}>
-      <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
+      <SheetContent side="right" className="w-full sm:max-w-xl md:max-w-2xl lg:max-w-3xl overflow-y-auto">
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             {type === 'reel' ? <MessageCircle className="w-5 h-5" /> : <Send className="w-5 h-5" />}
@@ -784,6 +784,25 @@ export const AutomationPanel = ({
                       </div>
                     </div>
                   </div>
+
+                  {/* DM thread mock (story) */}
+                  {type === 'story' && (
+                    <div className="px-3 pb-4 space-y-2">
+                      <div className="flex items-start gap-2">
+                        <div className="w-6 h-6 bg-muted rounded-full" />
+                        <div className="max-w-[75%] rounded-2xl bg-muted px-3 py-2 text-sm">
+                          Thanks for checking our story! How can we help?
+                          <div className="mt-1 text-[10px] text-muted-foreground">Just now</div>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2 justify-end">
+                        <div className="max-w-[75%] rounded-2xl bg-white text-black px-3 py-2 text-sm shadow-sm">
+                          {text.trim() || 'Your DM will appear here…'}
+                          <div className="mt-1 text-[10px] text-muted-foreground text-right">Just now</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

@@ -20,19 +20,10 @@ const Settings = () => {
 
   const handleExport = async () => {
     try {
-      const { mockApi } = await import('@/lib/mockApi');
-      const data = await mockApi.getAutomations();
-      
-      const exportData = {
-        timestamp: new Date().toISOString(),
-        automations: data,
-        version: "1.0"
-      };
-
-      const blob = new Blob([JSON.stringify(exportData, null, 2)], {
-        type: 'application/json'
-      });
-      
+      const res = await fetch('/api/automation');
+      const data = await res.json();
+      const exportData = { timestamp: new Date().toISOString(), automations: data, version: '1.0' };
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -41,17 +32,9 @@ const Settings = () => {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-
-      toast({
-        title: "Export successful!",
-        description: "Automations exported to file",
-      });
+      toast({ title: 'Export successful!', description: 'Automations exported to file' });
     } catch (error) {
-      toast({
-        title: "Export failed",
-        description: "Please try again",
-        variant: "destructive",
-      });
+      toast({ title: 'Export failed', description: 'Please try again', variant: 'destructive' });
     }
   };
 
@@ -69,7 +52,7 @@ const Settings = () => {
         throw new Error('Invalid file format');
       }
 
-      // TODO: Import to backend
+      // TODO: POST to an /api/automation/import endpoint if needed
       toast({
         title: "Import successful!",
         description: "Automations imported successfully",

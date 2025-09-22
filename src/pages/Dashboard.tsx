@@ -94,12 +94,15 @@ const Dashboard = () => {
 
   const fetchData = async () => {
     try {
-      // Use mock API for frontend-only demo
-      const { mockApi } = await import('@/lib/mockApi');
+      const [reelsRes, storiesRes, automationsRes] = await Promise.all([
+        fetch('/api/reels'),
+        fetch('/api/stories'),
+        fetch('/api/automation')
+      ]);
       const [reelsData, storiesData, automationData] = await Promise.all([
-        mockApi.getReels(),
-        mockApi.getStories(),
-        mockApi.getAutomations()
+        reelsRes.json(),
+        storiesRes.json(),
+        automationsRes.json()
       ]);
 
       setReels(reelsData);
@@ -124,13 +127,13 @@ const Dashboard = () => {
 
   const handleSaveAutomation = async (type: 'reel' | 'story', id: string, data: any) => {
     try {
-      const { mockApi } = await import('@/lib/mockApi');
-      
-      if (type === 'reel') {
-        await mockApi.saveReelAutomation(id, data);
-      } else {
-        await mockApi.saveStoryAutomation(id, data);
-      }
+      const endpoint = type === 'reel' ? `/api/automation/reel/${id}` : `/api/automation/story/${id}`;
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error('Failed to save');
 
       // Optimistic update
       setAutomations(prev => ({
@@ -157,13 +160,9 @@ const Dashboard = () => {
 
   const handleDeleteAutomation = async (type: 'reel' | 'story', id: string) => {
     try {
-      const { mockApi } = await import('@/lib/mockApi');
-      
-      if (type === 'reel') {
-        await mockApi.deleteReelAutomation(id);
-      } else {
-        await mockApi.deleteStoryAutomation(id);
-      }
+      const endpoint = type === 'reel' ? `/api/automation/reel/${id}` : `/api/automation/story/${id}`;
+      const res = await fetch(endpoint, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Failed to delete');
 
       setAutomations(prev => {
         const newAutomations = { ...prev };

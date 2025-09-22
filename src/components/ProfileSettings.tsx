@@ -118,29 +118,29 @@ export const ProfileSettings = ({ onClose }: ProfileSettingsProps) => {
     loadProfile();
   }, []);
 
-  const loadProfile = () => {
-    const stored = localStorage.getItem('user-profile');
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      setProfile(parsed);
-      setEditedProfile(parsed);
-    }
+  const loadProfile = async () => {
+    try {
+      const res = await fetch('/api/user/profile');
+      const data = await res.json();
+      setProfile(data);
+      setEditedProfile(data);
+    } catch {}
   };
 
-  const saveProfile = () => {
-    const updatedProfile = {
-      ...editedProfile,
-      updatedAt: new Date().toISOString()
-    };
-    
-    localStorage.setItem('user-profile', JSON.stringify(updatedProfile));
+  const saveProfile = async () => {
+    const res = await fetch('/api/user/profile', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(editedProfile),
+    });
+    if (!res.ok) {
+      toast({ title: 'Failed to update', variant: 'destructive' });
+      return;
+    }
+    const { profile: updatedProfile } = await res.json();
     setProfile(updatedProfile);
     setIsEditing(false);
-    
-    toast({
-      title: "Profile updated",
-      description: "Your profile has been saved successfully",
-    });
+    toast({ title: 'Profile updated', description: 'Your profile has been saved successfully' });
   };
 
   const handleInputChange = (field: string, value: any) => {

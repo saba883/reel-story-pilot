@@ -62,81 +62,30 @@ export const MessageTemplateModal = ({
 
   useEffect(() => {
     loadTemplates();
-  }, []);
+  }, [type]);
 
   useEffect(() => {
     filterTemplates();
   }, [templates, selectedCategory, searchQuery]);
 
-  const loadTemplates = () => {
-    const stored = localStorage.getItem('message-templates');
-    if (stored) {
-      const parsedTemplates = JSON.parse(stored);
-      const typeTemplates = parsedTemplates.filter((t: MessageTemplate) => t.type === type);
-      setTemplates(typeTemplates);
-    } else {
-      // Load default templates
-      const defaultTemplates: MessageTemplate[] = [
-        {
-          id: '1',
-          name: 'Great Content',
-          content: 'Great content! 👏',
-          type: 'comment',
-          category: 'engagement',
-          tags: ['positive', 'generic'],
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        },
-        {
-          id: '2',
-          name: 'Love This',
-          content: 'Love this! 🔥',
-          type: 'comment',
-          category: 'engagement',
-          tags: ['positive', 'short'],
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        },
-        {
-          id: '3',
-          name: 'Amazing Tips',
-          content: 'Amazing tips! 💯',
-          type: 'comment',
-          category: 'engagement',
-          tags: ['positive', 'tips'],
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        },
-        {
-          id: '4',
-          name: 'Thanks for Story',
-          content: 'Thanks for the story! 💯',
-          type: 'dm',
-          category: 'thanks',
-          tags: ['grateful', 'story'],
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        },
-        {
-          id: '5',
-          name: 'Great Story',
-          content: 'Great story! 🔥',
-          type: 'dm',
-          category: 'engagement',
-          tags: ['positive', 'story'],
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        }
-      ];
-      
-      const typeTemplates = defaultTemplates.filter(t => t.type === type);
-      setTemplates(typeTemplates);
-      saveTemplates(defaultTemplates);
+  const loadTemplates = async () => {
+    try {
+      const res = await fetch(`/api/templates/${type}`);
+      const data = await res.json();
+      setTemplates(data);
+    } catch {
+      setTemplates([]);
     }
   };
 
-  const saveTemplates = (templatesToSave: MessageTemplate[]) => {
-    localStorage.setItem('message-templates', JSON.stringify(templatesToSave));
+  const createTemplate = async (payload: { name: string; content: string; type: 'comment'|'dm'; category: string; tags: string[]; }) => {
+    const res = await fetch('/api/templates', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error('Failed');
+    return res.json();
   };
 
   const filterTemplates = () => {
@@ -157,7 +106,7 @@ export const MessageTemplateModal = ({
     setFilteredTemplates(filtered);
   };
 
-  const handleCreateTemplate = () => {
+  const handleCreateTemplate = async () => {
     if (!templateName.trim() || !templateContent.trim()) {
       toast({
         title: "Please fill in all required fields",
@@ -166,22 +115,14 @@ export const MessageTemplateModal = ({
       return;
     }
 
-    const newTemplate: MessageTemplate = {
-      id: Date.now().toString(),
+    const { template } = await createTemplate({
       name: templateName,
       content: templateContent,
       type,
       category: templateCategory || 'custom',
       tags: templateTags,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-
-    const allTemplates = JSON.parse(localStorage.getItem('message-templates') || '[]');
-    allTemplates.push(newTemplate);
-    saveTemplates(allTemplates);
-    
-    setTemplates(prev => [...prev, newTemplate]);
+    });
+    setTemplates(prev => [...prev, template]);
     resetForm();
     setShowCreateForm(false);
     
@@ -191,28 +132,24 @@ export const MessageTemplateModal = ({
     });
   };
 
-  const handleUpdateTemplate = () => {
+  const handleUpdateTemplate = async () => {
     if (!editingTemplate || !templateName.trim() || !templateContent.trim()) {
       return;
     }
 
-    const updatedTemplate: MessageTemplate = {
-      ...editingTemplate,
-      name: templateName,
-      content: templateContent,
-      category: templateCategory || 'custom',
-      tags: templateTags,
-      updatedAt: new Date().toISOString()
-    };
-
-    const allTemplates = JSON.parse(localStorage.getItem('message-templates') || '[]');
-    const index = allTemplates.findIndex((t: MessageTemplate) => t.id === editingTemplate.id);
-    if (index !== -1) {
-      allTemplates[index] = updatedTemplate;
-      saveTemplates(allTemplates);
-    }
-
-    setTemplates(prev => prev.map(t => t.id === editingTemplate.id ? updatedTemplate : t));
+    const res = await fetch(`/api/templates/${editingTemplate.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: templateName,
+        content: templateContent,
+        category: templateCategory || 'custom',
+        tags: templateTags,
+      })
+    });
+    if (!res.ok) return;
+    const { template } = await res.json();
+    setTemplates(prev => prev.map(t => t.id === editingTemplate.id ? template : t));
     resetForm();
     setEditingTemplate(null);
     
@@ -222,17 +159,11 @@ export const MessageTemplateModal = ({
     });
   };
 
-  const handleDeleteTemplate = (templateId: string) => {
-    const allTemplates = JSON.parse(localStorage.getItem('message-templates') || '[]');
-    const updatedTemplates = allTemplates.filter((t: MessageTemplate) => t.id !== templateId);
-    saveTemplates(updatedTemplates);
-    
+  const handleDeleteTemplate = async (templateId: string) => {
+    const res = await fetch(`/api/templates/${templateId}`, { method: 'DELETE' });
+    if (!res.ok) return;
     setTemplates(prev => prev.filter(t => t.id !== templateId));
-    
-    toast({
-      title: "Template deleted",
-      description: "Template removed successfully",
-    });
+    toast({ title: "Template deleted", description: "Template removed successfully" });
   };
 
   const handleEditTemplate = (template: MessageTemplate) => {
