@@ -27,7 +27,10 @@ import {
   Reply,
   Shuffle,
   FileText,
-  BookOpen
+  BookOpen,
+  Heart,
+  MoreHorizontal,
+  Bookmark
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { MessageTemplateModal } from "./MessageTemplateModal";
@@ -80,6 +83,7 @@ export const AutomationPanel = ({
   });
   const [activeTab, setActiveTab] = useState('basic');
   const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [showDeviceFrame, setShowDeviceFrame] = useState(true);
 
   useEffect(() => {
     if (existingAutomation) {
@@ -329,6 +333,14 @@ export const AutomationPanel = ({
             >
               <BookOpen className="w-4 h-4" />
               Use Template
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowDeviceFrame(!showDeviceFrame)}
+              className="flex items-center gap-2 col-span-2"
+            >
+              {showDeviceFrame ? 'Hide' : 'Show'} Device Frame
             </Button>
           </div>
 
@@ -662,30 +674,120 @@ export const AutomationPanel = ({
           )}
 
           {/* Live Preview */}
-          {text && (
-            <div className="space-y-2">
-              <Label>Preview</Label>
-              <Card className="border-0 bg-muted/30">
-                <CardContent className="p-3">
-                  <div className="flex items-start gap-2">
-                    <div className="w-6 h-6 bg-gradient-instagram rounded-full flex items-center justify-center">
-                      <span className="text-xs text-white font-bold">D</span>
+          <div className="space-y-2">
+            <Label>Preview</Label>
+            <Card className="border-0 bg-muted/30">
+              <CardContent className="p-3">
+                {/* Mobile mock: Instagram-like card */}
+                <div className={`${showDeviceFrame ? 'mx-auto w-full max-w-[360px] rounded-3xl border shadow-sm' : 'mx-auto w-full max-w-[360px]'} bg-background overflow-hidden`}>
+                  {/* Header (story shows bar) */}
+                  <div className="flex items-center justify-between px-3 py-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 bg-gradient-instagram rounded-full" />
+                      <div>
+                        <p className="text-sm font-semibold truncate">@{item.owner}</p>
+                        <p className="text-[10px] text-muted-foreground">Now</p>
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">Demo User</p>
-                      <p className="text-sm">{text}</p>
-                      {followBefore && (
-                        <Badge variant="outline" className="mt-1 text-xs">
-                          <UserPlus className="w-3 h-3 mr-1" />
-                          Will follow first
-                        </Badge>
-                      )}
+                    <MoreHorizontal className="w-5 h-5 text-muted-foreground" />
+                  </div>
+                  {type === 'story' && (
+                    <div className="mx-3 mb-2 h-1 rounded-full bg-muted">
+                      <div className="h-1 w-1/3 rounded-full bg-white/70" />
+                    </div>
+                  )}
+
+                  {/* Media */}
+                  <div className={`relative ${type === 'story' ? 'bg-black' : 'bg-muted'}`} style={{aspectRatio: '1/1'}}>
+                    <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-xs">
+                      {type === 'reel' ? 'Reel preview' : 'Story preview'}
+                    </div>
+                    {!!item?.thumbnail && (
+                      <img src={item.thumbnail} alt="preview" className="absolute inset-0 w-full h-full object-cover opacity-80" />
+                    )}
+                  </div>
+
+                  {/* Actions (hide for story to mimic viewer) */}
+                  {type === 'reel' && (
+                    <div className="flex items-center justify-between px-3 py-2">
+                      <div className="flex items-center gap-3">
+                        <Heart className="w-5 h-5" />
+                        <MessageCircle className="w-5 h-5" />
+                        <Send className="w-5 h-5" />
+                      </div>
+                      <Bookmark className="w-5 h-5" />
+                    </div>
+                  )}
+
+                  {/* Caption (reel only) */}
+                  {type === 'reel' && (
+                    <div className="px-3 pb-2">
+                      <p className="text-sm"><span className="font-semibold">@{item.owner}</span> {item.caption}</p>
+                    </div>
+                  )}
+
+                  {/* Automation message preview */}
+                  <div className="px-3 pb-3">
+                    <div className="flex items-start gap-2">
+                      <div className="w-6 h-6 bg-gradient-instagram rounded-full flex items-center justify-center">
+                        <span className="text-[10px] text-white font-bold">You</span>
+                      </div>
+                      <div className="flex-1">
+                        <div className={`inline-block rounded-2xl ${type === 'story' ? 'bg-white text-black' : 'bg-muted'} px-3 py-2 text-sm`}>
+                          {(type === 'reel' && commentReplies.length > 0)
+                            ? commentReplies[Math.floor(Math.random() * commentReplies.length)]
+                            : (text.trim() || (type === 'reel' ? 'Your comment will appear here…' : 'Your DM will appear here…'))}
+                        </div>
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          {followBefore && (
+                            <Badge variant="outline" className="text-[10px]">
+                              <UserPlus className="w-3 h-3 mr-1" /> follow first
+                            </Badge>
+                          )}
+                          {delay > 0 && (
+                            <Badge variant="outline" className="text-[10px]">
+                              <Clock className="w-3 h-3 mr-1" /> delay {delay}s
+                            </Badge>
+                          )}
+                          {customButtons.length > 0 && (
+                            <Badge variant="outline" className="text-[10px]">
+                              <Settings className="w-3 h-3 mr-1" /> {customButtons.length} btn
+                            </Badge>
+                          )}
+                          {customLinks.length > 0 && (
+                            <Badge variant="outline" className="text-[10px]">
+                              <Link className="w-3 h-3 mr-1" /> {customLinks.length} link
+                            </Badge>
+                          )}
+                          {triggerWords.length > 0 && (
+                            <Badge variant="outline" className="text-[10px]">
+                              <Hash className="w-3 h-3 mr-1" /> {triggerWords.length} trigger
+                            </Badge>
+                          )}
+                        </div>
+                        {(conditions.minFollowers || conditions.maxFollowers || conditions.hasBio || conditions.verified) && (
+                          <div className="mt-1 flex flex-wrap gap-1">
+                            {conditions.minFollowers ? (
+                              <Badge variant="secondary" className="text-[10px]">min {conditions.minFollowers}</Badge>
+                            ) : null}
+                            {conditions.maxFollowers ? (
+                              <Badge variant="secondary" className="text-[10px]">max {conditions.maxFollowers}</Badge>
+                            ) : null}
+                            {conditions.hasBio ? (
+                              <Badge variant="secondary" className="text-[10px]">has bio</Badge>
+                            ) : null}
+                            {conditions.verified ? (
+                              <Badge variant="secondary" className="text-[10px]">verified</Badge>
+                            ) : null}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
           <Separator />
 
